@@ -12,10 +12,9 @@ const createScene = () => {
     // Create lighting
     const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-    // Load the 3D model of the barista
-    BABYLON.SceneLoader.ImportMesh("", "models/", "barista_dance.glb", scene, () => {
-        console.log("Model loaded!");
-    });
+    // Создаём простую сферу вместо загрузки модели
+    const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: 2 }, scene);
+    sphere.position.y = 1;
 
     // Add text to the scene
     const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
