@@ -9,6 +9,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder  # Импортируем InlineKeyboardBuilder для создания клавиатур
 from logging.handlers import RotatingFileHandler
+from dotenv import load_dotenv  # Добавляем импорт для загрузки переменных окружения
 
 # =======================
 # 1. Настройка логирования
@@ -246,8 +247,22 @@ except Exception as e:
 # 3. Настройка бота
 # =======================
 
-# Указываем токен непосредственно в коде
-BOT_TOKEN = "7601337093:AAEPQpZicF5sJ0OtKg_UlEqCeBXSWgCT3lM"  # Замените на ваш реальный токен
+# Загружаем переменные окружения из файла .env
+load_dotenv()
+
+# Получение токена бота и URL веб-приложения из переменных окружения
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # Используем переменную окружения
+WEB_APP_URL = os.getenv("WEB_APP_URL")  # Используем переменную окружения
+
+if not BOT_TOKEN:
+    logger.critical("TELEGRAM_BOT_TOKEN не установлен. Пожалуйста, установите переменную окружения.")
+    print("TELEGRAM_BOT_TOKEN не установлен. Пожалуйста, установите переменную окружения.")
+    sys.exit(1)
+
+if not WEB_APP_URL:
+    logger.critical("WEB_APP_URL не установлен. Пожалуйста, установите переменную окружения.")
+    print("WEB_APP_URL не установлен. Пожалуйста, установите переменную окружения.")
+    sys.exit(1)
 
 # Создаем экземпляр бота
 try:
@@ -271,17 +286,17 @@ dispatcher.include_router(router)
 # Ваш уникальный user_id для администрирования
 ADMIN_USER_ID = 1490675453  # Замените на ваш реальный user_id
 
-# Клавиатура для команды /start
-main_keyboard = types.ReplyKeyboardMarkup(
-    keyboard=[
-        [types.KeyboardButton(text="/start"), types.KeyboardButton(text="/my_cafe")],
-        [types.KeyboardButton(text="/upgrade"), types.KeyboardButton(text="/shop")],
-        [types.KeyboardButton(text="/collect"), types.KeyboardButton(text="/inventory")],
-        [types.KeyboardButton(text="/achievements"), types.KeyboardButton(text="/leaderboard")],
-        [types.KeyboardButton(text="/open_game")]  # Новая кнопка
-    ],
-    resize_keyboard=True
-)
+# Клавиатура для команды /start (Inline Keyboard)
+def get_main_inline_keyboard():
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="Кнопка 1", callback_data="button1"),
+        InlineKeyboardButton(text="Кнопка 2", callback_data="button2")
+    )
+    builder.row(
+        InlineKeyboardButton(text="Open Game", url=WEB_APP_URL)
+    )
+    return builder.as_markup()
 
 # Добавление команды /test для диагностики
 @router.message(Command(commands=["test"]))
@@ -300,7 +315,7 @@ async def start_handler(message: types.Message):
         conn.commit()
         logger.info(f"Пользователь {message.from_user.id} зарегистрирован.")
         print(f"Пользователь {message.from_user.id} зарегистрирован.")
-        await message.answer("Добро пожаловать в Crypto Coffee! У вас теперь есть маленькая кофейня.", reply_markup=main_keyboard)
+        await message.answer("Добро пожаловать в Crypto Coffee! У вас теперь есть маленькая кофейня.", reply_markup=get_main_inline_keyboard())
     except Exception as e:
         logger.error(f"Ошибка в команде /start для пользователя {message.from_user.id}: {e}", exc_info=True)
         await message.answer("Произошла ошибка при регистрации. Пожалуйста, попробуйте позже.")
@@ -330,9 +345,8 @@ async def my_cafe_handler(message: Message):
                 response += "\n\n🏢 **Зданий:** Нет"
 
             # Создаем клавиатуру с кнопкой улучшения
-            keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Улучшить кофейню (50 монет)", callback_data="upgrade")]
-            ])
+            upgrade_button = InlineKeyboardButton(text="Улучшить кофейню (50 монет)", callback_data="upgrade_cafe")
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[[upgrade_button]])
 
             # Определяем путь к изображению на основе уровня
             image_path = f"images/cafe_level_{level}.jpg"
@@ -623,24 +637,7 @@ async def leaderboard_handler(message: Message):
         await message.answer("Произошла ошибка при получении лидерборда.")
 
 # =======================
-# 5. Новые хендлеры команд
-# =======================
-
-@router.message(Command(commands=["open_game"]))
-async def open_game_handler(message: Message):
-    WEB_APP_URL = "https://crypto-coffee.netlify.app"  # Замените на ваш актуальный URL
-
-    # Создаем InlineKeyboardMarkup с кнопкой-ссылкой
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Open Game", url=WEB_APP_URL)]
-    ])
-    
-    await message.answer("Нажмите кнопку ниже, чтобы открыть игру:", reply_markup=keyboard)
-    logger.info(f"Пользователь {message.from_user.id} запросил доступ к игре.")
-    print(f"Пользователь {message.from_user.id} запросил доступ к игре.")
-
-# =======================
-# 6. Административные команды
+# 5. Административные команды
 # =======================
 
 @router.message(Command(commands=["add_coins"]))
@@ -699,7 +696,83 @@ async def add_coins_handler(message: Message, command: Command):
         await message.answer("Произошла ошибка при пополнении баланса.")
 
 # =======================
-# 7. Запуск Бота
+# 6. Обработка Callback Queries
+# =======================
+
+@router.callback_query(lambda c: c.data and c.data.startswith('button'))
+async def button_handler_callback(query: types.CallbackQuery):
+    choice = query.data
+    if choice == 'button1':
+        await query.answer("Вы нажали Кнопку 1", show_alert=True)
+    elif choice == 'button2':
+        await query.answer("Вы нажали Кнопку 2", show_alert=True)
+    else:
+        await query.answer("Неизвестная кнопка.", show_alert=True)
+    logger.info(f"Пользователь {query.from_user.id} нажал {choice}")
+
+@router.callback_query(lambda c: c.data and c.data == 'upgrade_cafe')
+async def upgrade_cafe_callback(query: types.CallbackQuery):
+    user_id = query.from_user.id
+    try:
+        cursor.execute("""
+            SELECT balance, level FROM players WHERE user_id = ?
+        """, (user_id,))
+        player = cursor.fetchone()
+        if player and player[0] >= 50:
+            new_balance = player[0] - 50
+            new_level = player[1] + 1
+            cursor.execute("""
+                UPDATE players SET balance = ?, level = ?
+                WHERE user_id = ?
+            """, (new_balance, new_level, user_id))
+
+            # Проверка достижений
+            cursor.execute("""
+                SELECT achievement_id, name, condition FROM achievements
+            """)
+            achievements = cursor.fetchall()
+            earned_achievements = []
+            for achievement in achievements:
+                achievement_id, name, condition = achievement
+                # Парсим условие (предполагается, что условие в формате "level >= X")
+                if "level >=" in condition:
+                    required_level = int(condition.split(">=")[1].strip())
+                    if new_level >= required_level:
+                        # Проверяем, было ли уже достигнуто
+                        cursor.execute("""
+                            SELECT id FROM user_achievements WHERE user_id = ? AND achievement_id = ?
+                        """, (user_id, achievement_id))
+                        if not cursor.fetchone():
+                            # Добавляем достижение
+                            cursor.execute("""
+                                INSERT INTO user_achievements (user_id, achievement_id)
+                                VALUES (?, ?)
+                            """, (user_id, achievement_id))
+                            earned_achievements.append(name)
+
+            conn.commit()
+            await query.answer(f"Кофейня улучшена до уровня {new_level}! Теперь вы зарабатываете больше.", show_alert=True)
+            if earned_achievements:
+                achievements_text = ", ".join(earned_achievements)
+                await query.message.answer(f"🎉 Поздравляем! Вы достигли: {achievements_text}")
+            logger.info(f"Пользователь {user_id} улучшил кофейню до уровня {new_level}. Остаток баланса: {new_balance}")
+            print(f"Пользователь {user_id} улучшил кофейню до уровня {new_level}. Остаток баланса: {new_balance}")
+        else:
+            await query.answer("Недостаточно монет для улучшения. Нужно 50 монет.", show_alert=True)
+            logger.warning(f"Пользователь {user_id} попытался улучшить кофейню без достаточного баланса.")
+            print(f"Пользователь {user_id} недостаточно монет для улучшения.")
+    except Exception as e:
+        logger.error(f"Ошибка при улучшении кофейни пользователем {user_id}: {e}", exc_info=True)
+        await query.answer("Произошла ошибка при улучшении кофейни.", show_alert=True)
+
+# =======================
+# 7. Обработка других Callback Queries
+# =======================
+
+# Здесь можно добавить дополнительные обработчики для других callback_data, например, для покупки зданий.
+
+# =======================
+# 8. Запуск Бота
 # =======================
 
 async def main():
