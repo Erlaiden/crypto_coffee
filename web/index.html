@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Crypto Coffee</title>
+    <!-- Укажите стабильную версию Babylon.js -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
-    <script src="load_model.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <canvas id="renderCanvas"></canvas>
+    <!-- Скрипты подключаются после загрузки DOM -->
     <script>
         // Подключение WebSocket клиента
         const socket = new WebSocket('wss://e13158f6-2f03-4ac1-bdef-b1521a927119-00-re8if0891zck.janeway.replit.dev/ws'); // Замените на ваш URL
@@ -31,5 +32,6 @@
             console.error('WebSocket error:', error);
         });
     </script>
+    <script src="load_model.js"></script>
 </body>
 </html>
