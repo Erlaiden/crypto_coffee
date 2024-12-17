@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Coffee</title>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="load_model.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        // Подключение WebSocket клиента
+        const socket = new WebSocket('wss://e13158f6-2f03-4ac1-bdef-b1521a927119-00-re8if0891zck.janeway.replit.dev/ws'); // Замените на ваш URL
+
+        socket.addEventListener('open', function (event) {
+            console.log('WebSocket connected');
+        });
+
+        socket.addEventListener('message', function (event) {
+            console.log('Message from server:', event.data);
+            // Обработка полученных данных
+        });
+
+        socket.addEventListener('close', function (event) {
+            console.log('WebSocket disconnected');
+        });
+
+        socket.addEventListener('error', function (error) {
+            console.error('WebSocket error:', error);
+        });
+    </script>
+</body>
+</html>
