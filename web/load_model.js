@@ -7,36 +7,36 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const engine = new BABYLON.Engine(canvas, true);
 
-    // Function to create the scene
+    // Функция для создания сцены
     const createScene = () => {
-        console.log("Creating scene...");
+        console.log("Создание сцены...");
         const scene = new BABYLON.Scene(engine);
-        console.log("Scene created");
+        console.log("Сцена создана");
 
-        // Create a camera
+        // Создание камеры
         const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 3, 5, BABYLON.Vector3.Zero(), scene);
         camera.attachControl(canvas, true);
-        console.log("Camera created");
+        console.log("Камера создана");
 
-        // Create lighting
+        // Создание освещения
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-        console.log("Lighting created");
+        console.log("Освещение создано");
 
-        // Load the 3D model of the barista with error handling
+        // Загрузка 3D-модели баристы с обработкой ошибок
         BABYLON.SceneLoader.ImportMesh(
             "", 
             "models/", 
             "barista_dance.glb", 
             scene, 
             (meshes) => {
-                console.log("Model loaded!", meshes);
+                console.log("Модель загружена!", meshes);
             },
             (scene, message, exception) => {
-                console.error("Error loading model:", message, exception);
+                console.error("Ошибка при загрузке модели:", message, exception);
             }
         );
 
-        // Add text to the scene
+        // Добавление текста в сцену
         const advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         const textBlock = new BABYLON.GUI.TextBlock();
         textBlock.text = "Game in development: Crypto Coffee is coming soon!";
@@ -44,22 +44,22 @@ window.addEventListener('DOMContentLoaded', () => {
         textBlock.fontSize = 24;
         textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
         advancedTexture.addControl(textBlock);
-        console.log("GUI text added");
+        console.log("GUI текст добавлен");
 
-        // Start the render loop
+        // Запуск рендер-лупа
         engine.runRenderLoop(() => {
             try {
                 scene.render();
             } catch (error) {
-                console.error("Error during render loop:", error);
+                console.error("Ошибка в рендер-лупе:", error);
             }
         });
-        console.log("Render loop started");
+        console.log("Рендер-луп запущен");
 
-        // Handle window resize
+        // Обработка изменения размера окна
         window.addEventListener("resize", () => {
             engine.resize();
-            console.log("Engine resized");
+            console.log("Размер окна изменён, engine resized");
         });
 
         return scene;
@@ -67,8 +67,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
         createScene();
-        console.log("Scene created successfully");
+        console.log("Сцена успешно создана");
     } catch (error) {
-        console.error("Error creating scene:", error);
+        console.error("Ошибка при создании сцены:", error);
     }
 });
